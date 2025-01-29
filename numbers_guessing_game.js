@@ -275,12 +275,20 @@ const game = function () {
         if (!won_game)
             continue;
 
-        let user_name = getUserName();
-        if (user_name === null)
-            continue;
-
         let game_duration = game_end_time - game_start_time;
-        saveHighscore(user_name, calculateHighscore(game_duration));
+        let new_highscore = calculateHighscore(game_duration);
+
+        let is_qualified_for_leaderboard = false;
+        if(leaderboard.length >= LEADERBOARD_COUNT)
+            is_qualified_for_leaderboard = new_highscore > leaderboard[leaderboard.length -1];
+
+        if(is_qualified_for_leaderboard){
+            let user_name = getUserName();
+            if (user_name === null)
+                continue;
+
+            saveHighscore(user_name, new_highscore);
+        }
 
         displayLeaderboard();
     }
