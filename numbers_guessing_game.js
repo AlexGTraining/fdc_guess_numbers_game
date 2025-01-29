@@ -9,8 +9,8 @@ const GUESS_STATES = Object.freeze({
     HIGH: "high"
 });
 
-const ADVICE_PARAM_KEY = "-param-";
-const OPTION_PARAM_KEY = "-param2-";
+const ADVICE_PARAM_KEY = "-advice-param-";
+const OPTION_PARAM_KEY = "-option-param-";
 const USER_NAME_KEY = "user_name";
 const LEADERBOARD_KEY = "leaderboard";
 const SaveManager = Object.freeze({
@@ -279,10 +279,10 @@ const game = function () {
         let new_highscore = calculateHighscore(game_duration);
 
         let is_qualified_for_leaderboard = false;
-        if(leaderboard.length >= LEADERBOARD_COUNT)
-            is_qualified_for_leaderboard = new_highscore > leaderboard[leaderboard.length -1];
+        if (leaderboard.length >= LEADERBOARD_COUNT)
+            is_qualified_for_leaderboard = new_highscore > leaderboard[leaderboard.length - 1];
 
-        if(is_qualified_for_leaderboard){
+        if (is_qualified_for_leaderboard) {
             let user_name = getUserName();
             if (user_name === null)
                 continue;
