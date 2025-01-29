@@ -9,6 +9,8 @@ const GUESS_STATES = Object.freeze({
     HIGH: "high"
 });
 
+const ADVICE_PARAM_KEY = "-param-";
+const OPTION_PARAM_KEY = "-param2-";
 const USER_NAME_KEY = "user_name";
 const LEADERBOARD_KEY = "leaderboard";
 const SaveManager = Object.freeze({
@@ -26,22 +28,57 @@ const SaveManager = Object.freeze({
     }
 });
 
+const INTRO_MESSAGES = [
+    "\t\t\tWelcome to \“Escape from Isengard Tower\”!\n\n\t\t\t\tThis GAME is only for the brave!\n\t\t\t\t\tAre you ready to PLAY?",
+    "\t\t\t\t\t\t\tINTRO\n\nDuring one of your hikes through Middle Earth, you suddently find yourself trapped in Saruman's tower in Isengard together with Gandalf! As you're trying to escape your fait Saruman's orcs are closing in on you.",
+    "\t\t\t\t\t\t\tINTRO\n\nSARUMAN: HAHAHA! It seems you have locked yourself in my TOWER! You are doomed! My orcs will make a feast out of you now!",
+    "\t\t\t\t\t\t\tINTRO\n\nGANDALF: OH NO! We’re trapped and there’s only one ESCAPE! You have to UNLOCK the cipher on the main door. But HURRY! The orcs will lose no time, I reckon we have about 10 TRIES before they arrive.",
+    "\t\t\t\t\t\t\tINTRO\n\nSARUMAN: You’ll NEVER guess the code human.. I’ve made it nearly impossible MWHAHAHA",
+    "\t\t\t\t\t\t\tINTRO\n\nGANDALF: Don’t worry, Saruman can only count up to 100 and I might be able to hear the cogs move and give you hints along the way."
+];
+
+const ADVIDE_MESSAGES = [
+    `Give it your first shot, I’m sure it’s somewhere between 0 and 100`,
+    `That was not it, but you’ve made progress. Try a ${ADVICE_PARAM_KEY}er number`,
+    `Getting closer, ${ADVICE_PARAM_KEY} still`,
+    `Too ${OPTION_PARAM_KEY}, try again`,
+    `Good work! We’re narrowing it down now! Go ${ADVICE_PARAM_KEY}er`,
+    `We must be getting close, it’s ${ADVICE_PARAM_KEY}er`,
+    `Hmm.. it was a bit too ${OPTION_PARAM_KEY} that time, maybe somewhere in between`,
+    `Come on, I can hear the orcs coming. It’s somewhere ${ADVICE_PARAM_KEY}er`,
+    `We can’t let Saruman win, try again, ${ADVICE_PARAM_KEY}er this time`,
+    `HURRY! The orcs are at the door! Go ${ADVICE_PARAM_KEY}er`
+];
+
+const END_GAME_SUCCESS = [
+    `Gandalf: YES! That’s ${ADVICE_PARAM_KEY}! We’re out of here! Take that Saruman!`,
+    "Saruman:Damn you human! I should have known you were smart. My orcs will get you next time!",
+    "\t\t\t\t\t\tGAME OVER!\n\t\t\t\t\t\t   You WIN!"
+];
+
+const END_GAME_LOSE = [
+    "Gandalf: AAAARRGH! They’ve got us! We’re doomed!",
+    "Saruman: HAHAHA! That will teach you to mess with this GREAT wizard!",
+    "\t\t\t\t\t\tGAME OVER!\n\t\t\t\t\t\t   You LOSE!"
+];
+
 function LeaderboardItem(name, score) {
     this.name = name;
     this.score = score;
 };
 
 const generateRandomNumber = function (min = MIN_GUESS, max = MAX_GUESS) {
-    return Math.floor(Math.random() * max);
+    return Math.floor(Math.random() * (max - min + 1) + min);
 };
 
-const getPlayerGuess = function () {
-    let user_input = promptUser("I'm thinking of a number.. Can you guess which one it is?");
-    return parseInt(user_input);
+const getPlayerGuess = function (message) {
+    let user_input = promptUser(message);
+
+    return user_input === null ? 'quit' : parseInt(user_input);
 };
 
 const checkPlayerGuess = function (playerGuess, numberGenerated) {
-    if (playerGuess === numberGenerated)
+    if (playerGuess == numberGenerated)
         return GUESS_STATES.CORRECT;
     else if (playerGuess > numberGenerated)
         return GUESS_STATES.HIGH;
@@ -54,16 +91,11 @@ const notifyUser = function (message) {
 }
 
 const promptUser = function (message) {
-    prompt(message);
+    return prompt(message);
 }
 
-const resetGame = function () {
-    last_player_guess = null;
-    guesses_attempted = 0;
-    is_game_over = false;
-    guess_state = GUESS_STATES.UNKNOWN;
-    game_start_time = new Date().getTime();
-    game_end_time = game_start_time;
+const confirmUser = function (message) {
+    return confirm(message);
 }
 
 const getUserName = function () {
@@ -86,19 +118,15 @@ const getUserName = function () {
     return user_name;
 }
 
-const introduceUserToRules = function () {
-    notifyUser(`Welcome ${SaveManager.read(USER_NAME_KEY)}!\nHere are the game rules:\nI'm going to guess a number between ${MIN_GUESS} and ${MAX_GUESS}.\nThen you will get ${MAX_ATTEMPTS} attempts to try and guess it.\nDon't worry! I'll give you hints along the way.\nIf you're quick enough you might even make the leaderboard!\nGood Luck!`);
-}
-
 const saveHighscore = function (user_name, duration) {
     if (duration <= 0)
         return;
 
-    highscore = 1(duration / 1000);
+    highscore = 1 / (duration / 1000);
 
     let save_key = `${user_name}` + HIGHSCORE_KEY;
     console.log("save_key " + save_key + " highscore " + highscore);
-    
+
     let user_found = false;
     for (let i = 0; i < leaderboard.length; i++) {
         let user = leaderboard[i];
@@ -112,7 +140,7 @@ const saveHighscore = function (user_name, duration) {
         }
     }
 
-    if (user_found){
+    if (user_found) {
         if (leaderboard.length > 1) {
             leaderboard.sort((a, b) => b.score - a.score);
         }
@@ -132,65 +160,125 @@ const saveHighscore = function (user_name, duration) {
     SaveManager.save(LEADERBOARD_KEY, leaderboard);
 }
 
+const playIntro = function () {
+    for (let i = 0; i < INTRO_MESSAGES.length; i++) {
+        notifyUser(INTRO_MESSAGES[i]);
+    }
+}
+
+const replaceParams = function (message) {
+    if (message.includes(ADVICE_PARAM_KEY)) {
+        message = message.replace(ADVICE_PARAM_KEY, next_player_advice);
+    }
+
+    if (message.includes(OPTION_PARAM_KEY)) {
+        message = message.replace(OPTION_PARAM_KEY, last_player_choice);
+    }
+
+    return message;
+}
+
+const resetGame = function () {
+    next_player_advice = null;
+    guesses_attempted = 0;
+    is_game_over = false;
+    guess_state = GUESS_STATES.UNKNOWN;
+    game_start_time = new Date().getTime();
+    game_end_time = game_start_time;
+}
+
 const game = function () {
     leaderboard = SaveManager.read(LEADERBOARD_KEY);
 
     while (is_game_over) {
-        let user_option = true;
-        if (guess_state != GUESS_STATES.UNKNOWN)
-            user_option = confirm("Would you like to try again?");
+        let user_retry;
+        let user_quit;
+        if (guess_state == GUESS_STATES.UNKNOWN)
+            playIntro();
+        else {
+            user_retry = confirm("Would you like to try again?");
 
-        if (!user_option)
-            return;
+            if (!user_retry)
+                return;
+        }
 
         resetGame();
-        let user_name = getUserName();
 
-        if (user_name === null)
-            return;
-
-        introduceUserToRules();
         let generatedNumber = generateRandomNumber();
         console.log("generatedNumber " + generatedNumber);
 
         while (!is_game_over && guesses_attempted < MAX_ATTEMPTS) {
-            guesses_attempted++;
-            last_player_guess = getPlayerGuess();
-            guess_state = checkPlayerGuess(last_player_guess, generatedNumber);
+            let message_to_user = `\t\t\t\t\t\tAttempt ${guesses_attempted}\\${MAX_ATTEMPTS}\n\n\n`;
+            if (guesses_attempted == 0)
+                message_to_user += ADVIDE_MESSAGES[0];
+            else if (guesses_attempted < MAX_ATTEMPTS - 1) {
+                let array_selection = last_random;
+                while (array_selection == last_random) {
+                    //Use the first half of the adivce options array for the first half of attempts. Then use the second half for the second half of the attempts
+                    array_selection = generateRandomNumber((guesses_attempted < MAX_ATTEMPTS / 2) ? 1 : ADVIDE_MESSAGES.length / 2,
+                        (guesses_attempted < MAX_ATTEMPTS / 2) ? ADVIDE_MESSAGES.length / 2 : ADVIDE_MESSAGES.length - 2);
+                }
+                last_random = array_selection;
+                message_to_user += ADVIDE_MESSAGES[array_selection];
+            }
+            else {
+                message_to_user += ADVIDE_MESSAGES[ADVIDE_MESSAGES.length - 1];
+            }
+
+            let player_input = getPlayerGuess(replaceParams(message_to_user));
+
+            if (player_input == 'quit') {
+                user_quit = true;
+                break;
+            }
+
+            guess_state = checkPlayerGuess(player_input, generatedNumber);
 
             switch (guess_state) {
                 case GUESS_STATES.CORRECT:
                     is_game_over = true;
-                    notifyUser('Congratulation! Your guess was CORRECT!');
+                    next_player_advice = GUESS_STATES.CORRECT;
+                    last_player_choice = GUESS_STATES.CORRECT;
                     break;
                 case GUESS_STATES.HIGH:
-                    notifyUser('Sorry! Your guess was a bit too HIGH');
+                    last_player_choice = GUESS_STATES.HIGH;
+                    next_player_advice = GUESS_STATES.LOW;
                     break;
                 case GUESS_STATES.LOW:
-                    notifyUser('Sorry! Your guess was a bit too LOW');
+                    last_player_choice = GUESS_STATES.LOW;
+                    next_player_advice = GUESS_STATES.HIGH;
                     break;
             }
+            guesses_attempted++;
         }
+
+        is_game_over = true;
+
+        if (user_quit)
+            continue;
 
         game_end_time = new Date().getTime();
+        let won_game = guesses_attempted < MAX_ATTEMPTS;
+        let collection = won_game ? END_GAME_SUCCESS : END_GAME_LOSE;
+        for (let i = 0; i < collection.length; i++)
+            notifyUser(replaceParams(collection[i]));
+
+        if (!won_game)
+            continue;
+
+        let user_name = getUserName();
+        if (user_name === null)
+            continue;
+
         let game_duration = game_end_time - game_start_time;
-
         saveHighscore(user_name, game_duration);
-
-        if (guesses_attempted < MAX_ATTEMPTS) {
-            let message = `YAAY! You won the game! Congratulations!`;
-            if (guesses_attempted < MAX_ATTEMPTS / 2)
-                message += `\nAaaand you managed to do it in only ${guesses_attempted} attempts! Impressive!`;
-
-            notifyUser(message);
-        }
-        else
-            notifyUser(`Ahhh! Sorry, you lost!\nYou have used up all ${MAX_ATTEMPTS} attempts! Better luck next time :)`);
     }
 }
 
-let last_player_guess = null;
 let guesses_attempted = 0;
+let last_random = -1;
+let next_player_advice = null;
+let last_player_choice = null;
 let is_game_over = true;
 let guess_state = GUESS_STATES.UNKNOWN;
 let game_start_time = 0;
