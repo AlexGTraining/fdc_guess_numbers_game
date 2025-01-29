@@ -118,37 +118,50 @@ const getUserName = function () {
     return user_name;
 }
 
-const saveHighscore = function (user_name, duration) {
+let calculateHighscore = function (duration) {
     if (duration <= 0)
         return;
 
-    highscore = 1 / (duration / 1000);
+    let duration_in_seconds = duration / 1000;
+    let score = parseInt((1 / duration_in_seconds) * 100000);
+    console.log("duration: " + duration);
+    console.log("score: " + score);
+    return score;
+}
 
-    let save_key = `${user_name}` + HIGHSCORE_KEY;
-    console.log("save_key " + save_key + " highscore " + highscore);
+const loadLeaderboard = function () {
+    let leaderboard_loaded = SaveManager.read(LEADERBOARD_KEY);
 
-    let user_found = false;
-    for (let i = 0; i < leaderboard.length; i++) {
-        let user = leaderboard[i];
-        if (user.name === user_name) {
-            user_found = true;
-
-            if (highscore > user.score)
-                user.score = highscore;
-
-            break;
-        }
-    }
-
-    if (user_found) {
-        if (leaderboard.length > 1) {
-            leaderboard.sort((a, b) => b.score - a.score);
-        }
-
+    if (leaderboard_loaded == null)
         return;
+
+    leaderboard = Object.keys(leaderboard_loaded).map((key) => [key, leaderboard_loaded[key]]);
+}
+
+const saveHighscore = function (user_name, highscore) {
+    if (user_name == null || highscore == null)
+        return
+
+    let existing_user = null;
+    if (leaderboard != null) {
+        for (let i = 0; i < leaderboard.length; i++) {
+            if (leaderboard[i].name === user_name) {
+                existing_user = user;
+                break;
+            }
+        }
     }
 
-    leaderboard[leaderboard.length] = new LeaderboardItem(user_name, highscore);
+    if (existing_user == null) {
+        if (leaderboard == null)
+            leaderboard = new Array(new LeaderboardItem(user_name, highscore));
+        else
+            leaderboard[leaderboard.length] = new LeaderboardItem(user_name, highscore);
+    }
+
+
+    else if (highscore > existing_user.score)
+        existing_user = highscore;
 
     if (leaderboard.length > 1) {
         leaderboard.sort((a, b) => b.score - a.score);
@@ -188,7 +201,7 @@ const resetGame = function () {
 }
 
 const game = function () {
-    leaderboard = SaveManager.read(LEADERBOARD_KEY);
+    loadLeaderboard();
 
     while (is_game_over) {
         let user_retry;
@@ -266,13 +279,28 @@ const game = function () {
         if (!won_game)
             continue;
 
+
+
         let user_name = getUserName();
         if (user_name === null)
             continue;
 
         let game_duration = game_end_time - game_start_time;
-        saveHighscore(user_name, game_duration);
+        saveHighscore(user_name, calculateHighscore(game_duration));
+
+        displayLeaderboard();
     }
+}
+
+const displayLeaderboard = function () {
+    let message = "\t\t\t\t\t\tLeaderboard\n\n";
+    for (let i = 0; i < leaderboard.length; i++) {
+        let user = leaderboard[i];
+        message += `${user.name} : ${user.score}`
+        if (i < leaderboard.length - 1)
+            message += "\n";
+    }
+    notifyUser(message);
 }
 
 let guesses_attempted = 0;
@@ -283,6 +311,6 @@ let is_game_over = true;
 let guess_state = GUESS_STATES.UNKNOWN;
 let game_start_time = 0;
 let game_end_time = 0;
-let leaderboard = new Array();
+let leaderboard = null;
 
 game();
