@@ -143,7 +143,7 @@ const saveHighscore = function (user_name, highscore) {
     if (leaderboard != null) {
         for (let i = 0; i < leaderboard.length; i++) {
             if (leaderboard[i].name === user_name) {
-                existing_user = user;
+                existing_user = leaderboard[i];
                 break;
             }
         }
@@ -217,7 +217,7 @@ const game = function () {
         console.log("generatedNumber " + generatedNumber);
 
         while (!is_game_over && guesses_attempted < MAX_ATTEMPTS) {
-            let message_to_user = `\t\t\t\t\t\tAttempt ${guesses_attempted}\\${MAX_ATTEMPTS}\n\n\n`;
+            let message_to_user = `\t\t\t\t\t\tAttempt ${guesses_attempted + 1}\\${MAX_ATTEMPTS}\n\n\n`;
             if (guesses_attempted == 0)
                 message_to_user += ADVIDE_MESSAGES[0];
             else if (guesses_attempted < MAX_ATTEMPTS - 1) {
