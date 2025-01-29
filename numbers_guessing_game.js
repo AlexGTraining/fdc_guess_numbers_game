@@ -157,7 +157,7 @@ const saveHighscore = function (user_name, highscore) {
     }
 
     else if (highscore > existing_user.score)
-        existing_user = highscore;
+        existing_user.score = highscore;
 
     if (leaderboard.length > 1) {
         leaderboard.sort((a, b) => b.score - a.score);
