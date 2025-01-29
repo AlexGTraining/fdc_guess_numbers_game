@@ -8,6 +8,23 @@ const GUESS_STATES = Object.freeze({
     HIGH: "high"
 });
 
+const USER_NAME_KEY = "user_name";
+const SaveManager = Object.freeze({
+    save: function (key, value) {
+        localStorage.setItem(key, value);
+        console.log("executed localSave");
+    },
+    read: function (key) {
+        return localStorage.getItem(key);
+    },
+    remove: function (key) {
+        localStorage.removeItem(key);
+    },
+    clear: function () {
+        localStorage.clear();
+    }
+});
+
 const generateRandomNumber = function (min = MIN, max = MAX) {
     return Math.floor(Math.random() * max);
 };
@@ -37,6 +54,29 @@ const resetGame = function () {
     guess_state = GUESS_STATES.UNKNOWN;
 }
 
+const getUserName = function () {
+    let old_user_name = SaveManager.read(USER_NAME_KEY);
+    let message;
+    if (old_user_name === null || old_user_name === undefined)
+        message = ("Hi player!\nPlease enter your name");
+    else
+        message = `Hi ${old_user_name}!\nWould you like to change the name?`;
+
+    let new_user_name = prompt(message);
+
+    user_name = new_user_name !== null ? new_user_name : old_user_name;
+
+    while (user_name.length === 0) {
+        user_name = prompt(`Please give me a valid name`);
+    }
+
+    SaveManager.save(USER_NAME_KEY, user_name);
+}
+
+const introduceUserToRules = function () {
+    notifyUser(`Welcome ${SaveManager.read(USER_NAME_KEY)}!\nHere are the game rules:\nI'm going to guess a number between ${MIN} and ${MAX}.\nThen you will get ${MAX_ATTEMPTS} to try and guess it. Don't worry! I'll give you hints along the way.\nIf you're quick enough you might even make the leaderbaord!\nGood Luck!`);
+}
+
 const game = function () {
     while (is_game_over) {
         let user_option = true;
@@ -47,6 +87,8 @@ const game = function () {
             return;
 
         resetGame();
+        getUserName();
+        introduceUserToRules();
         let generatedNumber = generateRandomNumber();
         console.log("generatedNumber " + generatedNumber);
 
@@ -61,17 +103,21 @@ const game = function () {
                     notifyUser('Congratulation! Your guess was CORRECT!');
                     break;
                 case GUESS_STATES.HIGH:
-                    notifyUser('Sorry! Your guess was a bit too high');
+                    notifyUser('Sorry! Your guess was a bit too HIGH');
                     break;
                 case GUESS_STATES.LOW:
-                    notifyUser('Sorry! Your guess was a bit too low');
+                    notifyUser('Sorry! Your guess was a bit too LOW');
                     break;
             }
         }
 
-        if (guesses_attempted < MAX_ATTEMPTS) 
-            notifyUser(`YAAY! You won the game! Congratulations!\nAaaand you managed to do it in only ${guesses_attempted} attempts! Impressive!`);
-        else 
+        if (guesses_attempted < MAX_ATTEMPTS) {
+            if (guesses_attempted < MAX_ATTEMPTS / 2)
+                notifyUser(`YAAY! You won the game! Congratulations!\nAaaand you managed to do it in only ${guesses_attempted} attempts! Impressive!`);
+            else
+                notifyUser(`YAAY! You won the game! Congratulations!`);
+        }
+        else
             notifyUser(`Ahhh! Sorry, you lost!\nYou have used up all ${MAX_ATTEMPTS} attempts! Better luck next time :)`);
     }
 }
