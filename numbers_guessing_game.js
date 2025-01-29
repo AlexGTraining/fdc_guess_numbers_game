@@ -62,9 +62,11 @@ const END_GAME_LOSE = [
     "\t\t\t\t\t\tGAME OVER!\n\t\t\t\t\t\t   You LOSE!"
 ];
 
-function LeaderboardItem(name, score) {
-    this.name = name;
-    this.score = score;
+class LeaderboardItem {
+    constructor(name, score) {
+        this.name = name;
+        this.score = score;
+    }
 };
 
 const generateRandomNumber = function (min = MIN_GUESS, max = MAX_GUESS) {
@@ -130,12 +132,7 @@ let calculateHighscore = function (duration) {
 }
 
 const loadLeaderboard = function () {
-    let leaderboard_loaded = SaveManager.read(LEADERBOARD_KEY);
-
-    if (leaderboard_loaded == null)
-        return;
-
-    leaderboard = Object.keys(leaderboard_loaded).map((key) => [key, leaderboard_loaded[key]]);
+    leaderboard = JSON.parse(SaveManager.read(LEADERBOARD_KEY));
 }
 
 const saveHighscore = function (user_name, highscore) {
@@ -159,7 +156,6 @@ const saveHighscore = function (user_name, highscore) {
             leaderboard[leaderboard.length] = new LeaderboardItem(user_name, highscore);
     }
 
-
     else if (highscore > existing_user.score)
         existing_user = highscore;
 
@@ -170,7 +166,7 @@ const saveHighscore = function (user_name, highscore) {
     if (leaderboard.length > LEADERBOARD_COUNT)
         leaderboard.pop();
 
-    SaveManager.save(LEADERBOARD_KEY, leaderboard);
+    SaveManager.save(LEADERBOARD_KEY, JSON.stringify(leaderboard));
 }
 
 const playIntro = function () {
@@ -278,8 +274,6 @@ const game = function () {
 
         if (!won_game)
             continue;
-
-
 
         let user_name = getUserName();
         if (user_name === null)
