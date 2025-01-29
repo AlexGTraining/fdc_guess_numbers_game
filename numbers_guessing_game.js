@@ -40,19 +40,8 @@ const resetGame = function () {
 const game = function () {
     while (is_game_over) {
         let user_option = true;
-        if (guess_state != GUESS_STATES.UNKNOWN) {
-            let input = prompt("Would you like to try again? y/n");
-
-            switch (input) {
-                case "y":
-                    user_option = true;
-                    break;
-                case "n":
-                default:
-                    user_option = false;
-                    break;
-            }
-        }
+        if (guess_state != GUESS_STATES.UNKNOWN)
+            user_option = confirm("Would you like to try again?");
 
         if (!user_option)
             return;
