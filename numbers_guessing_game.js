@@ -30,7 +30,7 @@ const SaveManager = Object.freeze({
 
 const INTRO_MESSAGES = [
     "\t\t\tWelcome to \“Escape from Isengard Tower\”!\n\n\t\t\t\tThis GAME is only for the brave!\n\t\t\t\t\tAre you ready to PLAY?",
-    "\t\t\t\t\t\t\tINTRO\n\nDuring one of your hikes through Middle Earth, you suddently find yourself trapped in Saruman's tower in Isengard together with Gandalf! As you're trying to escape your fait Saruman's orcs are closing in on you.",
+    "\t\t\t\t\t\t\tINTRO\n\nDuring one of your hikes through Middle Earth, you suddenly find yourself trapped in Saruman's tower together with Gandalf! As you're trying to escape your fait Saruman's orcs are closing in on you.",
     "\t\t\t\t\t\t\tINTRO\n\nSARUMAN: HAHAHA! It seems you have locked yourself in my TOWER! You are doomed! My orcs will make a feast out of you now!",
     "\t\t\t\t\t\t\tINTRO\n\nGANDALF: OH NO! We’re trapped and there’s only one ESCAPE! You have to UNLOCK the cipher on the main door. But HURRY! The orcs will lose no time, I reckon we have about 10 TRIES before they arrive.",
     "\t\t\t\t\t\t\tINTRO\n\nSARUMAN: You’ll NEVER guess the code human.. I’ve made it nearly impossible MWHAHAHA",
@@ -40,7 +40,7 @@ const INTRO_MESSAGES = [
 const ADVIDE_MESSAGES = [
     `Give it your first shot, I’m sure it’s somewhere between 0 and 100`,
     `That was not it, but you’ve made progress. Try a ${ADVICE_PARAM_KEY}er number`,
-    `Getting closer, ${ADVICE_PARAM_KEY} still`,
+    `Getting closer, ${OPTION_PARAM_KEY} still`,
     `Too ${OPTION_PARAM_KEY}, try again`,
     `Good work! We’re narrowing it down now! Go ${ADVICE_PARAM_KEY}er`,
     `We must be getting close, it’s ${ADVICE_PARAM_KEY}er`,
