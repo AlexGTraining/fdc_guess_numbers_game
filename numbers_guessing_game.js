@@ -168,7 +168,7 @@ const getMessageDirectionIndex = function () {
 }
 
 const getPlayerGuess = function (message) {
-    let player_input = promptPlayer(message);
+    let player_input = prompt(message);
 
     if (player_input === null)
         return PLAYER_FEEDBACK_STATES.QUIT;
@@ -208,18 +208,6 @@ const generatePlayerAdvice = function (guess_state) {
     }
 }
 
-const notifyPlayer = function (message) {
-    alert(message);
-}
-
-const promptPlayer = function (message) {
-    return prompt(message);
-}
-
-const confirmPlayer = function (message) {
-    return confirm(message);
-}
-
 const log = function (message) {
     if (DEBUG_MODE)
         console.log(message);
@@ -228,13 +216,13 @@ const log = function (message) {
 const getPlayerName = function (highscore) {
     let message = MADE_LEADERBOARD_MESSAGE.replace(HIGHSCORE_PARAM_KEY, highscore);
 
-    let new_player_name = promptPlayer(message);
+    let new_player_name = prompt(message);
 
     if (new_player_name === null)
         return null;
 
     while (new_player_name === null || new_player_name === undefined || new_player_name.trim().length === 0) {
-        new_player_name = promptPlayer(VALID_PLAYER_NAME_FEEDBACK);
+        new_player_name = prompt(VALID_PLAYER_NAME_FEEDBACK);
     }
 
     new_player_name = new_player_name.substring(0, 20);
@@ -310,12 +298,12 @@ const displayLeaderboard = function (score, is_on_leaderboard) {
     if (!is_on_leaderboard)
         message += YOUR_HIGHSCORE_MESSAGE.replace(SCORE_PARAM_KEY, score);
 
-    notifyPlayer(message);
+    alert(message);
 }
 
 const playIntro = function () {
     for (let i = 0; i < INTRO_MESSAGES.length; i++) {
-        notifyPlayer(INTRO_MESSAGES[i]);
+        alert(INTRO_MESSAGES[i]);
     }
 
     _intro_complete = true;
@@ -324,7 +312,7 @@ const playIntro = function () {
 const playEndSequence = function (won_game) {
     let collection = won_game ? END_GAME_SUCCESS : END_GAME_LOSE;
     for (let i = 0; i < collection.length; i++)
-        notifyPlayer(replaceParams(collection[i]));
+        alert(replaceParams(collection[i]));
 }
 
 const replaceParams = function (message) {
@@ -359,13 +347,13 @@ const game = function () {
         if (!_intro_complete)
             playIntro();
         else {
-            if (!confirmPlayer(TRY_AGAIN_MESSAGE)) {
-                notifyPlayer(YOU_QUIT_MESSAGE)
+            if (!confirm(TRY_AGAIN_MESSAGE)) {
+                alert(YOU_QUIT_MESSAGE)
                 return;
             }
 
 
-            if (!confirmPlayer(SKIP_INTRO_MESSAGE))
+            if (!confirm(SKIP_INTRO_MESSAGE))
                 playIntro();
         }
 
