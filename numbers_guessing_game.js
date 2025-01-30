@@ -72,8 +72,7 @@ const DISCOURAGE_MESSAGES = [
     "GANDALF\n\n\"Doesn't seem to work.. ",
     "GANDALF\n\n\"Hmm... that was the wrong way. ",
     "GANDALF\n\n\"No, not that way. ",
-    "GANDALF\n\n\"Oh, I think that was not the right way. ",
-    "GANDALF\n\n\"You are testing my paticence..",
+    "GANDALF\n\n\"Oh, I think that was not the right way. "
 ];
 
 const END_GAME_SUCCESS = [
