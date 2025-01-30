@@ -17,6 +17,8 @@ const PLAYER_FEEDBACK_STATES = Object.freeze({
 
 const ADVICE_PARAM_KEY = "-advice-param-";
 const OPTION_PARAM_KEY = "-option-param-";
+const GUESSES_PARAM_KEY = "-guesses-param-";
+const HIGHSCORE_PARAM_KEY = "-highscore-param-"
 const LEADERBOARD_KEY = "leaderboard";
 const SaveManager = Object.freeze({
     save: function (key, value) {
@@ -34,12 +36,12 @@ const SaveManager = Object.freeze({
 });
 
 const INTRO_MESSAGES = [
-    "\t\t\tWelcome to \“Escape from Isengard Tower\”!\n\n\t\t\t\tThis GAME is only for the brave!\n\t\t\t\t\tAre you ready to PLAY?",
-    "\t\t\t\t\t\t\tINTRO\n\nDuring one of your hikes through Middle Earth, you suddenly find yourself trapped in Saruman's tower together with Gandalf! As you're trying to escape your fait Saruman's orcs are closing in on you.",
-    "\t\t\t\t\t\tSARUMAN\n\n\"HAHAHA! It seems you have locked yourself in my TOWER! You are doomed! My orcs will make a feast out of you now!\"",
-    "\t\t\t\t\t\tGANDALF\n\n\"OH NO! We’re trapped and there’s only one ESCAPE! You have to UNLOCK the cipher on the main door. But HURRY! The orcs will lose no time, I reckon we have about 10 TRIES before they arrive.\"",
-    "\t\t\t\t\t\tSARUMAN\n\n\"You’ll NEVER guess the code human.. I’ve made it nearly impossible MWHAHAHA\"",
-    "\t\t\t\t\t\tGANDALF\n\n\"Don’t worry, Saruman can only count up to 100 and I might be able to hear the cogs move and give you hints along the way.\"",
+    "Welcome to \“Escape from Isengard Tower\”!\n\nThis GAME is only for the brave!\nAre you ready to PLAY?",
+    "INTRO\n\nDuring one of your hikes through Middle Earth, you suddenly find yourself trapped in Saruman's tower together with Gandalf! As you're trying to escape your fait Saruman's orcs are closing in on you.",
+    "SARUMAN\n\n\"HAHAHA! It seems you have locked yourself in my TOWER! You are doomed! My orcs will make a feast out of you now!\"",
+    "GANDALF\n\n\"OH NO! We’re trapped and there’s only one ESCAPE! You have to UNLOCK the cipher on the main door. But HURRY! The orcs will lose no time, I reckon we have about 10 TRIES before they arrive.\"",
+    "SARUMAN\n\n\"You’ll NEVER guess the code human.. I’ve made it nearly impossible MWHAHAHA\"",
+    "GANDALF\n\n\"Don’t worry, Saruman can only count up to 100 and I might be able to hear the cogs move and give you hints along the way.\"",
 ];
 
 const ADVIDE_MESSAGES = [
@@ -56,16 +58,25 @@ const ADVIDE_MESSAGES = [
 ];
 
 const END_GAME_SUCCESS = [
-    `\t\t\t\t\t\tGANDALF\n\n\"YES! That’s ${ADVICE_PARAM_KEY}! We’re out of here! Take that Saruman!\"`,
-    "\t\t\t\t\t\tSARUMAN\n\n\"Damn you human! I should have known you were smart. My orcs will get you next time!\"",
-    "\t\t\t\t\t\tGAME OVER!\n\t\t\t\t\t\t   You WIN!"
+    `GANDALF\n\n\"YES! That’s ${ADVICE_PARAM_KEY}! We’re out of here! Take that Saruman!\"`,
+    "SARUMAN\n\n\"Damn you human! I should have known you were smart. My orcs will get you next time!\"",
+    "GAME OVER!\n\nYou WIN!"
 ];
 
 const END_GAME_LOSE = [
-    "\t\t\t\t\t\tGANDALF\n\n\"AAAARRGH! They’ve got us! We’re doomed!\"",
-    "\t\t\t\t\t\tSARUMAN\n\n\"HAHAHA! That will teach you to mess with this GREAT wizard!\"",
-    "\t\t\t\t\t\tGAME OVER!\n\t\t\t\t\t\t   You LOSE!"
+    "GANDALF\n\n\"AAAARRGH! They’ve got us! We’re doomed!\"",
+    "SARUMAN\n\n\"HAHAHA! That will teach you to mess with this GREAT wizard!\"",
+    "GAME OVER!\n\nYou LOSE!"
 ];
+
+const ATTEMPT_COUNTER_MESSAGE = `Attempt ${GUESSES_PARAM_KEY}\\${MAX_ATTEMPTS}\n\n\n`;
+const ADDITIONAL_PLAYER_FEEDBACK = "Hmm.. I didn't understand that message, try a number between 0 and 100.";
+const MADE_LEADERBOARD_MESSAGE = `Congrats CHAMP!\nYou've made the leaderboard!\nScore: ${HIGHSCORE_PARAM_KEY}\n\nNow give me your player name so I can place you in there.`
+const VALID_PLAYER_NAME_FEEDBACK = `Please give me a valid name. Max 20 characters`;
+const TRY_AGAIN_MESSAGE = "Would you like to try again?";
+const SKIP_INTRO_MESSAGE = "Would you like to skip the intro?";
+const YOU_QUIT_MESSAGE = "You QUIT!\n\nThanks for playing! See you next time!";
+const LEADERBOARD_TITLE = "Leaderboard\n\n";
 
 class LeaderboardItem {
     constructor(name, score) {
@@ -79,11 +90,11 @@ const generateRandomNumber = function (min = MIN_GUESS, max = MAX_GUESS) {
 };
 
 const buildMessageToPlayer = function (guesses_attempted, give_additional_player_feedback) {
-    let message_to_player = `\t\t\t\t\t\tAttempt ${guesses_attempted + 1}\\${MAX_ATTEMPTS}\n\n\n`;
+    let message_to_player = ATTEMPT_COUNTER_MESSAGE.replace(GUESSES_PARAM_KEY, guesses_attempted + 1);
 
     if (guesses_attempted == 0) {
         if (give_additional_player_feedback)
-            message_to_player += "Hmm.. I didn't understand that message, try a number between 0 and 100."
+            message_to_player += ADDITIONAL_PLAYER_FEEDBACK;
         else
             message_to_player += ADVIDE_MESSAGES[0];
     }
@@ -97,13 +108,13 @@ const buildMessageToPlayer = function (guesses_attempted, give_additional_player
         _last_random_selection = array_selection;
 
         if (give_additional_player_feedback)
-            message_to_player += "Hmm.. I didn't understand that message, try a number between 0 and 100 this time.\n\n";
+            message_to_player += (ADDITIONAL_PLAYER_FEEDBACK + "\n\n");
 
         message_to_player += ADVIDE_MESSAGES[array_selection];
     }
     else {
         if (give_additional_player_feedback)
-            message_to_player += "Hmm.. I didn't understand that message, try a number between 0 and 100 this time.\n\n";
+            message_to_player += (ADDITIONAL_PLAYER_FEEDBACK + "\n\n");
 
         message_to_player += ADVIDE_MESSAGES[ADVIDE_MESSAGES.length - 1];
     }
@@ -166,7 +177,7 @@ const log = function (message) {
 }
 
 const getPlayerName = function (highscore) {
-    let message = `Congrats CHAMP!\n You've made the leaderboard!\n Score: ${highscore}\n\n Now give me your player name so I can place you in there.`;
+    let message = MADE_LEADERBOARD_MESSAGE.replace(HIGHSCORE_PARAM_KEY, highscore);
 
     let new_player_name = promptPlayer(message);
 
@@ -174,7 +185,7 @@ const getPlayerName = function (highscore) {
         return null;
 
     while (new_player_name === null || new_player_name === undefined || new_player_name.trim().length === 0) {
-        new_player_name = promptPlayer(`Please give me a valid name. Max 20 characters`);
+        new_player_name = promptPlayer(VALID_PLAYER_NAME_FEEDBACK);
     }
 
     new_player_name = new_player_name.substring(0, 20);
@@ -247,11 +258,11 @@ const playEndSequence = function (won_game) {
 
 const replaceParams = function (message) {
     if (message.includes(ADVICE_PARAM_KEY)) {
-        message = message.replace(ADVICE_PARAM_KEY, _next_player_advice);
+        message = message.replaceAll(ADVICE_PARAM_KEY, _next_player_advice);
     }
 
     if (message.includes(OPTION_PARAM_KEY)) {
-        message = message.replace(OPTION_PARAM_KEY, _last_player_choice);
+        message = message.replaceAll(OPTION_PARAM_KEY, _last_player_choice);
     }
 
     return message;
@@ -275,10 +286,13 @@ const game = function () {
         if (!_intro_complete)
             playIntro();
         else {
-            if (!confirmPlayer("Would you like to try again?"))
+            if (!confirmPlayer(TRY_AGAIN_MESSAGE)) {
+                notifyPlayer(YOU_QUIT_MESSAGE)
                 return;
+            }
 
-            if (!confirmPlayer("Would you like to skip the intro?"))
+
+            if (!confirmPlayer(SKIP_INTRO_MESSAGE))
                 playIntro();
         }
 
@@ -343,7 +357,7 @@ const game = function () {
 }
 
 const displayLeaderboard = function () {
-    let message = "\t\t\t\t\t\tLeaderboard\n\n";
+    let message = LEADERBOARD_TITLE;
     for (let i = 0; i < _leaderboard.length; i++) {
         let player = _leaderboard[i];
         message += `${player.name} : ${player.score}`
