@@ -1,3 +1,4 @@
+const DEBUG_MODE = true;
 const MIN_GUESS = 0;
 const MAX_GUESS = 100;
 const MAX_ATTEMPTS = 10;
@@ -7,6 +8,11 @@ const GUESS_STATES = Object.freeze({
     CORRECT: "correct",
     LOW: "low",
     HIGH: "high"
+});
+const USER_FEEDBACK_STATES = Object.freeze({
+    QUIT: "quit",
+    RETRY: "retry",
+    CONTINUE: "continue"
 });
 
 const ADVICE_PARAM_KEY = "-advice-param-";
@@ -31,19 +37,19 @@ const SaveManager = Object.freeze({
 const INTRO_MESSAGES = [
     "\t\t\tWelcome to \“Escape from Isengard Tower\”!\n\n\t\t\t\tThis GAME is only for the brave!\n\t\t\t\t\tAre you ready to PLAY?",
     "\t\t\t\t\t\t\tINTRO\n\nDuring one of your hikes through Middle Earth, you suddenly find yourself trapped in Saruman's tower together with Gandalf! As you're trying to escape your fait Saruman's orcs are closing in on you.",
-    "\t\t\t\t\t\t\tINTRO\n\nSARUMAN: HAHAHA! It seems you have locked yourself in my TOWER! You are doomed! My orcs will make a feast out of you now!",
-    "\t\t\t\t\t\t\tINTRO\n\nGANDALF: OH NO! We’re trapped and there’s only one ESCAPE! You have to UNLOCK the cipher on the main door. But HURRY! The orcs will lose no time, I reckon we have about 10 TRIES before they arrive.",
-    "\t\t\t\t\t\t\tINTRO\n\nSARUMAN: You’ll NEVER guess the code human.. I’ve made it nearly impossible MWHAHAHA",
-    "\t\t\t\t\t\t\tINTRO\n\nGANDALF: Don’t worry, Saruman can only count up to 100 and I might be able to hear the cogs move and give you hints along the way."
+    "\t\t\t\t\t\tSARUMAN\n\n\"HAHAHA! It seems you have locked yourself in my TOWER! You are doomed! My orcs will make a feast out of you now!\"",
+    "\t\t\t\t\t\tGANDALF\n\n\"OH NO! We’re trapped and there’s only one ESCAPE! You have to UNLOCK the cipher on the main door. But HURRY! The orcs will lose no time, I reckon we have about 10 TRIES before they arrive.\"",
+    "\t\t\t\t\t\tSARUMAN\n\n\"You’ll NEVER guess the code human.. I’ve made it nearly impossible MWHAHAHA\"",
+    "\t\t\t\t\t\tGANDALF\n\n\"Don’t worry, Saruman can only count up to 100 and I might be able to hear the cogs move and give you hints along the way.\"",
 ];
 
 const ADVIDE_MESSAGES = [
-    `Give it your first shot, I’m sure it’s somewhere between 0 and 100`,
+    `Give it your first shot, I’m sure it’s anywhere between 0 and 100`,
     `That was not it, but you’ve made progress. Try a ${ADVICE_PARAM_KEY}er number`,
-    `Getting closer, ${ADVICE_PARAM_KEY}er still`,
+    `Getting closer, endeavor to go ${ADVICE_PARAM_KEY}er still`,
     `Too ${OPTION_PARAM_KEY}, try again`,
     `Good work! We’re narrowing it down now! Go ${ADVICE_PARAM_KEY}er`,
-    `We must be getting close, it’s ${ADVICE_PARAM_KEY}er`,
+    `We must be getting close, it’s somewhere in the ${ADVICE_PARAM_KEY}er range`,
     `Hmm.. it was a bit too ${OPTION_PARAM_KEY} that time, maybe somewhere in between`,
     `Come on, I can hear the orcs coming. It’s somewhere ${ADVICE_PARAM_KEY}er`,
     `We can’t let Saruman win, try again, ${ADVICE_PARAM_KEY}er this time`,
@@ -51,14 +57,14 @@ const ADVIDE_MESSAGES = [
 ];
 
 const END_GAME_SUCCESS = [
-    `Gandalf: YES! That’s ${ADVICE_PARAM_KEY}! We’re out of here! Take that Saruman!`,
-    "Saruman:Damn you human! I should have known you were smart. My orcs will get you next time!",
+    `\t\t\t\t\t\tGANDALF\n\n\"YES! That’s ${ADVICE_PARAM_KEY}! We’re out of here! Take that Saruman!\"`,
+    "\t\t\t\t\t\tSARUMAN\n\n\"Damn you human! I should have known you were smart. My orcs will get you next time!\"",
     "\t\t\t\t\t\tGAME OVER!\n\t\t\t\t\t\t   You WIN!"
 ];
 
 const END_GAME_LOSE = [
-    "Gandalf: AAAARRGH! They’ve got us! We’re doomed!",
-    "Saruman: HAHAHA! That will teach you to mess with this GREAT wizard!",
+    "\t\t\t\t\t\tGANDALF\n\n\"AAAARRGH! They’ve got us! We’re doomed!\"",
+    "\t\t\t\t\t\tSARUMAN\n\n\"HAHAHA! That will teach you to mess with this GREAT wizard!\"",
     "\t\t\t\t\t\tGAME OVER!\n\t\t\t\t\t\t   You LOSE!"
 ];
 
@@ -73,10 +79,48 @@ const generateRandomNumber = function (min = MIN_GUESS, max = MAX_GUESS) {
     return Math.floor(Math.random() * (max - min + 1) + min);
 };
 
+const buildMessageToPlayer = function (guesses_attempted, give_additional_player_feedback) {
+    let message_to_player = `\t\t\t\t\t\tAttempt ${guesses_attempted + 1}\\${MAX_ATTEMPTS}\n\n\n`;
+
+    if (guesses_attempted == 0) {
+        if (give_additional_player_feedback)
+            message_to_player += "Hmm.. I didn't understand that message, try a number between 0 and 100."
+        else
+            message_to_player += ADVIDE_MESSAGES[0];
+    }
+    else if (guesses_attempted < MAX_ATTEMPTS - 1) {
+        let array_selection = last_random_selection;
+        while (array_selection == last_random_selection) {
+            //Use the first half of the adivce options array for the first half of attempts. Then use the second half for the second half of the attempts
+            array_selection = generateRandomNumber((guesses_attempted < MAX_ATTEMPTS / 2) ? 1 : ADVIDE_MESSAGES.length / 2,
+                (guesses_attempted < MAX_ATTEMPTS / 2) ? ADVIDE_MESSAGES.length / 2 : ADVIDE_MESSAGES.length - 2);
+        }
+        last_random_selection = array_selection;
+
+        if (give_additional_player_feedback)
+            message_to_player += "Hmm.. I didn't understand that message, try a number between 0 and 100 this time.\n\n";
+
+        message_to_player += ADVIDE_MESSAGES[array_selection];
+    }
+    else {
+        if (give_additional_player_feedback)
+            message_to_player += "Hmm.. I didn't understand that message, try a number between 0 and 100 this time.\n\n";
+
+        message_to_player += ADVIDE_MESSAGES[ADVIDE_MESSAGES.length - 1];
+    }
+
+    return message_to_player;
+}
+
 const getPlayerGuess = function (message) {
     let user_input = promptUser(message);
 
-    return user_input === null ? 'quit' : parseInt(user_input);
+    if (user_input === null)
+        return USER_FEEDBACK_STATES.QUIT;
+
+    let parsed_input = parseInt(user_input, 10);
+
+    return isNaN(parsed_input) ? USER_FEEDBACK_STATES.RETRY : parsed_input;
 };
 
 const checkPlayerGuess = function (playerGuess, numberGenerated) {
@@ -86,6 +130,23 @@ const checkPlayerGuess = function (playerGuess, numberGenerated) {
         return GUESS_STATES.HIGH;
     else
         return GUESS_STATES.LOW;
+}
+
+const generatePlayerAdvice = function (guess_state) {
+    switch (guess_state) {
+        case GUESS_STATES.CORRECT:
+            next_player_advice = GUESS_STATES.CORRECT;
+            last_player_choice = GUESS_STATES.CORRECT;
+            break;
+        case GUESS_STATES.HIGH:
+            last_player_choice = GUESS_STATES.HIGH;
+            next_player_advice = GUESS_STATES.LOW;
+            break;
+        case GUESS_STATES.LOW:
+            last_player_choice = GUESS_STATES.LOW;
+            next_player_advice = GUESS_STATES.HIGH;
+            break;
+    }
 }
 
 const notifyUser = function (message) {
@@ -98,6 +159,11 @@ const promptUser = function (message) {
 
 const confirmUser = function (message) {
     return confirm(message);
+}
+
+const log = function (message) {
+    if (DEBUG_MODE)
+        console.log(message);
 }
 
 const getUserName = function () {
@@ -126,8 +192,8 @@ let calculateHighscore = function (duration) {
 
     let duration_in_seconds = duration / 1000;
     let score = parseInt((1 / duration_in_seconds) * 100000);
-    console.log("duration: " + duration);
-    console.log("score: " + score);
+    log("duration: " + duration);
+    log("score: " + score);
     return score;
 }
 
@@ -173,6 +239,14 @@ const playIntro = function () {
     for (let i = 0; i < INTRO_MESSAGES.length; i++) {
         notifyUser(INTRO_MESSAGES[i]);
     }
+
+    intro_complete = true;
+}
+
+const playEndSequence = function (won_game) {
+    let collection = won_game ? END_GAME_SUCCESS : END_GAME_LOSE;
+    for (let i = 0; i < collection.length; i++)
+        notifyUser(replaceParams(collection[i]));
 }
 
 const replaceParams = function (message) {
@@ -199,78 +273,56 @@ const resetGame = function () {
 const game = function () {
     loadLeaderboard();
 
-    while (is_game_over) {
-        let user_retry;
+    while (true) {
         let user_quit;
-        if (guess_state == GUESS_STATES.UNKNOWN)
+
+        if (!intro_complete)
             playIntro();
         else {
-            user_retry = confirm("Would you like to try again?");
-
-            if (!user_retry)
+            if (!confirmUser("Would you like to try again?"))
                 return;
+
+            if (!confirmUser("Would you like to skip the intro?"))
+                playIntro();
         }
 
         resetGame();
 
         let generatedNumber = generateRandomNumber();
-        console.log("generatedNumber " + generatedNumber);
+        log("generatedNumber " + generatedNumber);
 
+        let give_additional_player_feedback = false;
         while (!is_game_over && guesses_attempted < MAX_ATTEMPTS) {
-            let message_to_user = `\t\t\t\t\t\tAttempt ${guesses_attempted + 1}\\${MAX_ATTEMPTS}\n\n\n`;
-            if (guesses_attempted == 0)
-                message_to_user += ADVIDE_MESSAGES[0];
-            else if (guesses_attempted < MAX_ATTEMPTS - 1) {
-                let array_selection = last_random;
-                while (array_selection == last_random) {
-                    //Use the first half of the adivce options array for the first half of attempts. Then use the second half for the second half of the attempts
-                    array_selection = generateRandomNumber((guesses_attempted < MAX_ATTEMPTS / 2) ? 1 : ADVIDE_MESSAGES.length / 2,
-                        (guesses_attempted < MAX_ATTEMPTS / 2) ? ADVIDE_MESSAGES.length / 2 : ADVIDE_MESSAGES.length - 2);
-                }
-                last_random = array_selection;
-                message_to_user += ADVIDE_MESSAGES[array_selection];
-            }
-            else {
-                message_to_user += ADVIDE_MESSAGES[ADVIDE_MESSAGES.length - 1];
-            }
-
+            let message_to_user = buildMessageToPlayer(guesses_attempted, give_additional_player_feedback);
             let player_input = getPlayerGuess(replaceParams(message_to_user));
 
-            if (player_input == 'quit') {
+            if (player_input == USER_FEEDBACK_STATES.QUIT) {
+                give_additional_player_feedback = false;
                 user_quit = true;
                 break;
             }
+            else if (player_input == USER_FEEDBACK_STATES.RETRY) {
+                give_additional_player_feedback = true;
+                continue;
+            }
+            else
+                give_additional_player_feedback = false;
 
             guess_state = checkPlayerGuess(player_input, generatedNumber);
 
-            switch (guess_state) {
-                case GUESS_STATES.CORRECT:
-                    is_game_over = true;
-                    next_player_advice = GUESS_STATES.CORRECT;
-                    last_player_choice = GUESS_STATES.CORRECT;
-                    break;
-                case GUESS_STATES.HIGH:
-                    last_player_choice = GUESS_STATES.HIGH;
-                    next_player_advice = GUESS_STATES.LOW;
-                    break;
-                case GUESS_STATES.LOW:
-                    last_player_choice = GUESS_STATES.LOW;
-                    next_player_advice = GUESS_STATES.HIGH;
-                    break;
-            }
+            is_game_over = guess_state == GUESS_STATES.CORRECT;
+
+            generatePlayerAdvice(guess_state);
+
             guesses_attempted++;
         }
-
-        is_game_over = true;
 
         if (user_quit)
             continue;
 
         game_end_time = new Date().getTime();
         let won_game = guesses_attempted < MAX_ATTEMPTS;
-        let collection = won_game ? END_GAME_SUCCESS : END_GAME_LOSE;
-        for (let i = 0; i < collection.length; i++)
-            notifyUser(replaceParams(collection[i]));
+        playEndSequence(won_game);
 
         if (!won_game)
             continue;
@@ -305,8 +357,9 @@ const displayLeaderboard = function () {
     notifyUser(message);
 }
 
+let intro_complete = false;
 let guesses_attempted = 0;
-let last_random = -1;
+let last_random_selection = -1;
 let next_player_advice = null;
 let last_player_choice = null;
 let is_game_over = true;
