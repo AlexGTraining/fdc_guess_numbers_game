@@ -90,7 +90,7 @@ const END_GAME_LOSE = [
 
 const ATTEMPT_COUNTER_MESSAGE = `Attempt ${GUESSES_PARAM_KEY}\\${MAX_ATTEMPTS}\n\n`;
 const ADDITIONAL_PLAYER_FEEDBACK = "Hmm.. I didn't understand that message, try a number between 0 and 100.";
-const MADE_LEADERBOARD_MESSAGE = `Congrats CHAMP!\nYou've made the leaderboard!\nScore: ${HIGHSCORE_PARAM_KEY}\n\nNow give me your player name so I can place you in there.`
+const MADE_LEADERBOARD_MESSAGE = `٩(^‿^)۶\nCongrats CHAMP!\nYou've made the leaderboard!\nScore: ${HIGHSCORE_PARAM_KEY}\n\nNow give me your player name so I can place you in there.`
 const VALID_PLAYER_NAME_FEEDBACK = `Please give me a valid name. Max 20 characters`;
 const TRY_AGAIN_MESSAGE = "Would you like to try again?";
 const SKIP_INTRO_MESSAGE = "Would you like to skip the intro?";
@@ -238,6 +238,7 @@ const getPlayerName = function (highscore) {
     }
 
     new_player_name = new_player_name.substring(0, 20);
+    _current_player_name = new_player_name;
 
     return new_player_name;
 }
@@ -248,6 +249,10 @@ let calculateHighscore = function (duration) {
 
     let duration_in_seconds = duration / 1000;
     let score = parseInt((1 / duration_in_seconds) * 100000);
+
+    if (score < 1)
+        score = 1;
+
     return score;
 }
 
@@ -287,6 +292,25 @@ const saveHighscore = function (player_name, highscore) {
         _leaderboard.pop();
 
     SaveManager.save(LEADERBOARD_SAVE_KEY, JSON.stringify(_leaderboard));
+}
+
+const displayLeaderboard = function (score, is_on_leaderboard) {
+    let message = LEADERBOARD_TITLE;
+    for (let i = 0; i < _leaderboard.length; i++) {
+        let player = _leaderboard[i];
+        message += `${player.name} : ${player.score}`
+
+        if (player.name == _current_player_name)
+            message += " <-- (•̀ᴗ•́)و ̑̑"
+
+        if (i < _leaderboard.length - 1)
+            message += "\n";
+    }
+
+    if (!is_on_leaderboard)
+        message += YOUR_HIGHSCORE_MESSAGE.replace(SCORE_PARAM_KEY, score);
+
+    notifyPlayer(message);
 }
 
 const playIntro = function () {
@@ -391,7 +415,7 @@ const game = function () {
 
         let is_qualified_for_leaderboard = true;
         if (_leaderboard.length >= LEADERBOARD_COUNT)
-            is_qualified_for_leaderboard = new_highscore > _leaderboard[_leaderboard.length - 1];
+            is_qualified_for_leaderboard = new_highscore > _leaderboard[_leaderboard.length - 1].score;
 
         if (is_qualified_for_leaderboard) {
             let player_name = getPlayerName(new_highscore);
@@ -403,21 +427,6 @@ const game = function () {
 
         displayLeaderboard(new_highscore, is_qualified_for_leaderboard);
     }
-}
-
-const displayLeaderboard = function (score, is_on_leaderboard) {
-    let message = LEADERBOARD_TITLE;
-    for (let i = 0; i < _leaderboard.length; i++) {
-        let player = _leaderboard[i];
-        message += `${player.name} : ${player.score}`
-        if (i < _leaderboard.length - 1)
-            message += "\n";
-    }
-
-    if (!is_on_leaderboard)
-        message += YOUR_HIGHSCORE_MESSAGE.replace(SCORE_PARAM_KEY, score);
-
-    notifyPlayer(message);
 }
 
 let _intro_complete = false;
@@ -432,6 +441,7 @@ let _is_game_over = true;
 let _guess_state = GUESS_STATES.UNKNOWN;
 let _game_start_time = 0;
 let _game_end_time = 0;
+let _current_player_name = "";
 let _leaderboard = null;
 
 game();
