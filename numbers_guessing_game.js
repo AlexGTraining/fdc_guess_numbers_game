@@ -19,7 +19,8 @@ const ADVICE_PARAM_KEY = "-advice-param-";
 const OPTION_PARAM_KEY = "-option-param-";
 const GUESSES_PARAM_KEY = "-guesses-param-";
 const HIGHSCORE_PARAM_KEY = "-highscore-param-"
-const LEADERBOARD_KEY = "leaderboard";
+const SCORE_PARAM_KEY = "-score-param-"
+const LEADERBOARD_SAVE_KEY = "leaderboard";
 const SaveManager = Object.freeze({
     save: function (key, value) {
         localStorage.setItem(key, value);
@@ -45,16 +46,34 @@ const INTRO_MESSAGES = [
 ];
 
 const ADVIDE_MESSAGES = [
-    `Give it your first shot, I’m sure it’s anywhere between 0 and 100`,
-    `That was not it, but you’ve made progress. Try a ${ADVICE_PARAM_KEY}er number`,
-    `Getting closer, endeavor to go ${ADVICE_PARAM_KEY}er still`,
-    `Too ${OPTION_PARAM_KEY}, try again`,
-    `Good work! We’re narrowing it down now! Go ${ADVICE_PARAM_KEY}er`,
-    `We must be getting close, it’s somewhere in the ${ADVICE_PARAM_KEY}er range`,
-    `Hmm.. it was a bit too ${OPTION_PARAM_KEY} that time, maybe somewhere in between`,
-    `Come on, I can hear the orcs coming. It’s somewhere ${ADVICE_PARAM_KEY}er`,
-    `We can’t let Saruman win, try again, ${ADVICE_PARAM_KEY}er this time`,
-    `HURRY! The orcs are at the door! Go ${ADVICE_PARAM_KEY}er`
+    `GANDALF\n\n\"Give it your best shot, I’m sure it’s anywhere between 0 and 100\"`,
+    `Try a ${ADVICE_PARAM_KEY}er number.\"`,
+    `Endeavor to go ${ADVICE_PARAM_KEY}er.\"`,
+    `Too ${OPTION_PARAM_KEY}, try again.\"`,
+    `Go ${ADVICE_PARAM_KEY}er.\"`,
+    `It’s somewhere in the ${ADVICE_PARAM_KEY}er range.\"`,
+    `Too ${OPTION_PARAM_KEY} that time.\"`,
+    `QUICK! I can hear the orcs coming. It’s somewhere ${ADVICE_PARAM_KEY}er.\"`,
+    `We can’t let Saruman win, try again, ${ADVICE_PARAM_KEY}er this time.\"`,
+    `HURRY! The orcs are at the door! Go ${ADVICE_PARAM_KEY}er.\"`
+];
+
+const ENCOURAGE_MESSAGES = [
+    "GANDALF\n\n\"Good work! ",
+    "GANDALF\n\n\"Yes! We're narrowing it down now! ",
+    "GANDALF\n\n\"I think we're getting closer. ",
+    "GANDALF\n\n\"Great! We're on the right track. ",
+    "GANDALF\n\n\"Good good. Keep going. ",
+    "GANDALF\n\n\"That was not it, but you’ve made progress. "
+];
+
+const DISCOURAGE_MESSAGES = [
+    "GANDALF\n\n\"That was the wrong way around. ",
+    "GANDALF\n\n\"Doesn't seem to work.. ",
+    "GANDALF\n\n\"Hmm... that was the wrong way. ",
+    "GANDALF\n\n\"No, not that way. ",
+    "GANDALF\n\n\"Oh, I think that was not the right way. ",
+    "GANDALF\n\n\"You are testing my paticence..",
 ];
 
 const END_GAME_SUCCESS = [
@@ -69,7 +88,7 @@ const END_GAME_LOSE = [
     "GAME OVER!\n\nYou LOSE!"
 ];
 
-const ATTEMPT_COUNTER_MESSAGE = `Attempt ${GUESSES_PARAM_KEY}\\${MAX_ATTEMPTS}\n\n\n`;
+const ATTEMPT_COUNTER_MESSAGE = `Attempt ${GUESSES_PARAM_KEY}\\${MAX_ATTEMPTS}\n\n`;
 const ADDITIONAL_PLAYER_FEEDBACK = "Hmm.. I didn't understand that message, try a number between 0 and 100.";
 const MADE_LEADERBOARD_MESSAGE = `Congrats CHAMP!\nYou've made the leaderboard!\nScore: ${HIGHSCORE_PARAM_KEY}\n\nNow give me your player name so I can place you in there.`
 const VALID_PLAYER_NAME_FEEDBACK = `Please give me a valid name. Max 20 characters`;
@@ -77,6 +96,7 @@ const TRY_AGAIN_MESSAGE = "Would you like to try again?";
 const SKIP_INTRO_MESSAGE = "Would you like to skip the intro?";
 const YOU_QUIT_MESSAGE = "You QUIT!\n\nThanks for playing! See you next time!";
 const LEADERBOARD_TITLE = "Leaderboard\n\n";
+const YOUR_HIGHSCORE_MESSAGE = `\n\nYour score is ${SCORE_PARAM_KEY}`
 
 class LeaderboardItem {
     constructor(name, score) {
@@ -92,6 +112,8 @@ const generateRandomNumber = function (min = MIN_GUESS, max = MAX_GUESS) {
 const buildMessageToPlayer = function (guesses_attempted, give_additional_player_feedback) {
     let message_to_player = ATTEMPT_COUNTER_MESSAGE.replace(GUESSES_PARAM_KEY, guesses_attempted + 1);
 
+    let message_direction_selection = getMessageDirectionIndex();
+
     if (guesses_attempted == 0) {
         if (give_additional_player_feedback)
             message_to_player += ADDITIONAL_PLAYER_FEEDBACK;
@@ -99,16 +121,12 @@ const buildMessageToPlayer = function (guesses_attempted, give_additional_player
             message_to_player += ADVIDE_MESSAGES[0];
     }
     else if (guesses_attempted < MAX_ATTEMPTS - 1) {
-        let array_selection = _last_random_selection;
-        while (array_selection == _last_random_selection) {
-            //Use the first half of the adivce options array for the first half of attempts. Then use the second half for the second half of the attempts
-            array_selection = generateRandomNumber((guesses_attempted < MAX_ATTEMPTS / 2) ? 1 : ADVIDE_MESSAGES.length / 2,
-                (guesses_attempted < MAX_ATTEMPTS / 2) ? ADVIDE_MESSAGES.length / 2 : ADVIDE_MESSAGES.length - 2);
-        }
-        _last_random_selection = array_selection;
+        let array_selection = getMainMessageIndex(guesses_attempted);
 
         if (give_additional_player_feedback)
             message_to_player += (ADDITIONAL_PLAYER_FEEDBACK + "\n\n");
+
+        message_to_player += _guess_good_direction ? ENCOURAGE_MESSAGES[message_direction_selection] : DISCOURAGE_MESSAGES[message_direction_selection];
 
         message_to_player += ADVIDE_MESSAGES[array_selection];
     }
@@ -116,10 +134,34 @@ const buildMessageToPlayer = function (guesses_attempted, give_additional_player
         if (give_additional_player_feedback)
             message_to_player += (ADDITIONAL_PLAYER_FEEDBACK + "\n\n");
 
+        message_to_player += _guess_good_direction ? ENCOURAGE_MESSAGES[message_direction_selection] : DISCOURAGE_MESSAGES[message_direction_selection];
+
         message_to_player += ADVIDE_MESSAGES[ADVIDE_MESSAGES.length - 1];
     }
 
     return message_to_player;
+}
+
+const getMainMessageIndex = function (guesses_attempted) {
+    let array_selection = _last_random_message_selection;
+    while (array_selection == _last_random_message_selection) {
+        //Use the first half of the adivce options array for the first half of attempts. Then use the second half for the second half of the attempts
+        array_selection = generateRandomNumber((guesses_attempted < MAX_ATTEMPTS / 2) ? 1 : ADVIDE_MESSAGES.length / 2,
+            (guesses_attempted < MAX_ATTEMPTS / 2) ? ADVIDE_MESSAGES.length / 2 : ADVIDE_MESSAGES.length - 2);
+    }
+    _last_random_message_selection = array_selection;
+
+    return array_selection;
+}
+
+const getMessageDirectionIndex = function () {
+    let message_direction_selection = _last_random_message_direction_selection;
+    while (message_direction_selection == _last_random_message_direction_selection) {
+        message_direction_selection = generateRandomNumber(0, _guess_good_direction ? ENCOURAGE_MESSAGES.length - 1 : DISCOURAGE_MESSAGES.length - 1);
+    }
+    _last_random_message_direction_selection = message_direction_selection;
+
+    return message_direction_selection;
 }
 
 const getPlayerGuess = function (message) {
@@ -134,6 +176,10 @@ const getPlayerGuess = function (message) {
 };
 
 const checkPlayerGuess = function (playerGuess, numberGenerated) {
+
+    _guess_good_direction = Math.abs(numberGenerated - _previous_guess) > Math.abs(numberGenerated - playerGuess);
+    _previous_guess = playerGuess;
+
     if (playerGuess == numberGenerated)
         return GUESS_STATES.CORRECT;
     else if (playerGuess > numberGenerated)
@@ -199,13 +245,11 @@ let calculateHighscore = function (duration) {
 
     let duration_in_seconds = duration / 1000;
     let score = parseInt((1 / duration_in_seconds) * 100000);
-    log("duration: " + duration);
-    log("score: " + score);
     return score;
 }
 
 const loadLeaderboard = function () {
-    _leaderboard = JSON.parse(SaveManager.read(LEADERBOARD_KEY));
+    _leaderboard = JSON.parse(SaveManager.read(LEADERBOARD_SAVE_KEY));
 }
 
 const saveHighscore = function (player_name, highscore) {
@@ -239,7 +283,7 @@ const saveHighscore = function (player_name, highscore) {
     if (_leaderboard.length > LEADERBOARD_COUNT)
         _leaderboard.pop();
 
-    SaveManager.save(LEADERBOARD_KEY, JSON.stringify(_leaderboard));
+    SaveManager.save(LEADERBOARD_SAVE_KEY, JSON.stringify(_leaderboard));
 }
 
 const playIntro = function () {
@@ -275,6 +319,8 @@ const resetGame = function () {
     _guess_state = GUESS_STATES.UNKNOWN;
     _game_start_time = new Date().getTime();
     _game_end_time = _game_start_time;
+    _guess_direction = 0;
+    _guess_good_direction = true;
 }
 
 const game = function () {
@@ -352,11 +398,11 @@ const game = function () {
             saveHighscore(player_name, new_highscore);
         }
 
-        displayLeaderboard();
+        displayLeaderboard(new_highscore, is_qualified_for_leaderboard);
     }
 }
 
-const displayLeaderboard = function () {
+const displayLeaderboard = function (score, is_on_leaderboard) {
     let message = LEADERBOARD_TITLE;
     for (let i = 0; i < _leaderboard.length; i++) {
         let player = _leaderboard[i];
@@ -364,14 +410,21 @@ const displayLeaderboard = function () {
         if (i < _leaderboard.length - 1)
             message += "\n";
     }
+
+    if (!is_on_leaderboard)
+        message += YOUR_HIGHSCORE_MESSAGE.replace(SCORE_PARAM_KEY, score);
+
     notifyPlayer(message);
 }
 
 let _intro_complete = false;
 let _guesses_attempted = 0;
-let _last_random_selection = -1;
+let _last_random_message_selection = -1;
+let _last_random_message_direction_selection = -1;
 let _next_player_advice = null;
 let _last_player_choice = null;
+let _previous_guess = -1;
+let _guess_good_direction = true;
 let _is_game_over = true;
 let _guess_state = GUESS_STATES.UNKNOWN;
 let _game_start_time = 0;
