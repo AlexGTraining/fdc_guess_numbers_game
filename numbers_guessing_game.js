@@ -125,10 +125,13 @@ const buildMessageToPlayer = function (guesses_attempted, give_additional_player
 
         if (give_additional_player_feedback)
             message_to_player += (ADDITIONAL_PLAYER_FEEDBACK + "\n\n");
-
-        message_to_player += _guess_good_direction ? ENCOURAGE_MESSAGES[message_direction_selection] : DISCOURAGE_MESSAGES[message_direction_selection];
+        else
+            message_to_player += _guess_good_direction ? ENCOURAGE_MESSAGES[message_direction_selection] : DISCOURAGE_MESSAGES[message_direction_selection];
 
         message_to_player += ADVIDE_MESSAGES[array_selection];
+
+        if (give_additional_player_feedback)
+            message_to_player = message_to_player.slice(0, -1);
     }
     else {
         if (give_additional_player_feedback)
