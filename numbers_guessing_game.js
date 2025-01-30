@@ -1,4 +1,4 @@
-const DEBUG_MODE = true;
+const DEBUG_MODE = false;
 const MIN_GUESS = 0;
 const MAX_GUESS = 100;
 const MAX_ATTEMPTS = 10;
