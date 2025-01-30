@@ -40,7 +40,7 @@ const INTRO_MESSAGES = [
 const ADVIDE_MESSAGES = [
     `Give it your first shot, I’m sure it’s somewhere between 0 and 100`,
     `That was not it, but you’ve made progress. Try a ${ADVICE_PARAM_KEY}er number`,
-    `Getting closer, ${OPTION_PARAM_KEY} still`,
+    `Getting closer, ${ADVICE_PARAM_KEY}er still`,
     `Too ${OPTION_PARAM_KEY}, try again`,
     `Good work! We’re narrowing it down now! Go ${ADVICE_PARAM_KEY}er`,
     `We must be getting close, it’s ${ADVICE_PARAM_KEY}er`,
