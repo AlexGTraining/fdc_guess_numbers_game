@@ -392,8 +392,6 @@ const game = function () {
             _guess_state = checkPlayerGuess(player_input, generatedNumber);
 
             _is_game_over = _guess_state == GUESS_STATES.CORRECT;
-            if (_is_game_over)
-                break;
 
             generatePlayerAdvice(_guess_state);
         }
