@@ -23,16 +23,29 @@ const SCORE_PARAM_KEY = "-score-param-"
 const LEADERBOARD_SAVE_KEY = "leaderboard";
 const SaveManager = Object.freeze({
     save: function (key, value) {
-        localStorage.setItem(key, value);
+        if (isLocalStorageEnabled())
+            localStorage.setItem(key, value);
+        else
+            console.error("Unable to save to localstorage. It might be disabled.");
     },
     read: function (key) {
-        return localStorage.getItem(key);
+        if (isLocalStorageEnabled())
+            return localStorage.getItem(key);
+        else
+            console.error("Unable to read from localstorage. It might be disabled.");
+        return null;
     },
     remove: function (key) {
-        localStorage.removeItem(key);
+        if (isLocalStorageEnabled())
+            localStorage.removeItem(key);
+        else
+            console.error("Unable to remove from localstorage. It might be disabled.");
     },
     clear: function () {
-        localStorage.clear();
+        if (isLocalStorageEnabled)
+            localStorage.clear();
+        else
+            console.error("Unable to clear localstorage. It might be disabled.");
     }
 });
 
@@ -258,8 +271,7 @@ let calculateHighscore = function (duration) {
 }
 
 const loadLeaderboard = function () {
-    if (isLocalStorageEnabled)
-        _leaderboard = JSON.parse(SaveManager.read(LEADERBOARD_SAVE_KEY));
+    _leaderboard = JSON.parse(SaveManager.read(LEADERBOARD_SAVE_KEY));
 }
 
 const saveHighscore = function (player_name, highscore) {
@@ -293,8 +305,7 @@ const saveHighscore = function (player_name, highscore) {
     if (_leaderboard.length > LEADERBOARD_COUNT)
         _leaderboard.pop();
 
-    if (isLocalStorageEnabled)
-        SaveManager.save(LEADERBOARD_SAVE_KEY, JSON.stringify(_leaderboard));
+    SaveManager.save(LEADERBOARD_SAVE_KEY, JSON.stringify(_leaderboard));
 }
 
 const displayLeaderboard = function (score, is_on_leaderboard) {
