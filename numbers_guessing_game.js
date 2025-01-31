@@ -204,7 +204,7 @@ const checkPlayerGuess = function (playerGuess, numberGenerated) {
         return GUESS_STATES.LOW;
 }
 
-const generatePlayerAdvice = function (guess_state) {
+const generateFeedbackForThePlayer = function (guess_state) {
     switch (guess_state) {
         case GUESS_STATES.CORRECT:
             _next_player_advice = GUESS_STATES.CORRECT;
@@ -393,7 +393,7 @@ const game = function () {
 
             _is_game_over = _guess_state == GUESS_STATES.CORRECT;
 
-            generatePlayerAdvice(_guess_state);
+            generateFeedbackForThePlayer(_guess_state);
         }
 
         if (player_quit)
