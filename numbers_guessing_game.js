@@ -93,7 +93,8 @@ const MADE_LEADERBOARD_MESSAGE = `٩(^‿^)۶\nCongrats CHAMP!\nYou've made the 
 const VALID_PLAYER_NAME_FEEDBACK = `Please give me a valid name. Max 20 characters`;
 const TRY_AGAIN_MESSAGE = "Would you like to try again?";
 const SKIP_INTRO_MESSAGE = "Would you like to skip the intro?";
-const YOU_QUIT_MESSAGE = "You QUIT!\n\nThanks for playing! See you next time!";
+const YOU_QUIT_MESSAGE = "Sorry to see you go!\n\nThanks for playing! See you next time!";
+const YOU_QUIT_RETRY_MESSAGE = "Oh no, you QUIT the game!\n\n";
 const LEADERBOARD_TITLE = "Leaderboard\n\n";
 const YOUR_HIGHSCORE_MESSAGE = `\n\nYour score is ${SCORE_PARAM_KEY}`
 
@@ -181,6 +182,8 @@ const checkPlayerGuess = function (playerGuess, numberGenerated) {
 
     _guess_good_direction = Math.abs(numberGenerated - _previous_guess) > Math.abs(numberGenerated - playerGuess);
     _previous_guess = playerGuess;
+
+    _guesses_attempted++;
 
     if (playerGuess == numberGenerated)
         return GUESS_STATES.CORRECT;
@@ -341,17 +344,16 @@ const resetGame = function () {
 const game = function () {
     loadLeaderboard();
 
+    let player_quit = false;
     while (true) {
-        let player_quit;
 
         if (!_intro_complete)
             playIntro();
         else {
-            if (!confirm(TRY_AGAIN_MESSAGE)) {
+            if (!confirm(player_quit ? YOU_QUIT_RETRY_MESSAGE + TRY_AGAIN_MESSAGE : TRY_AGAIN_MESSAGE)) {
                 alert(YOU_QUIT_MESSAGE)
                 return;
             }
-
 
             if (!confirm(SKIP_INTRO_MESSAGE))
                 playIntro();
@@ -367,25 +369,21 @@ const game = function () {
             let message_to_player = buildMessageToPlayer(_guesses_attempted, give_additional_player_feedback);
             let player_input = getPlayerGuess(replaceParams(message_to_player));
 
-            if (player_input == PLAYER_FEEDBACK_STATES.QUIT) {
-                give_additional_player_feedback = false;
-                player_quit = true;
+            player_quit = player_input == PLAYER_FEEDBACK_STATES.QUIT;
+            give_additional_player_feedback = player_input == PLAYER_FEEDBACK_STATES.RETRY;
+
+            if (player_quit)
                 break;
-            }
-            else if (player_input == PLAYER_FEEDBACK_STATES.RETRY) {
-                give_additional_player_feedback = true;
+            else if (give_additional_player_feedback)
                 continue;
-            }
-            else
-                give_additional_player_feedback = false;
 
             _guess_state = checkPlayerGuess(player_input, generatedNumber);
 
             _is_game_over = _guess_state == GUESS_STATES.CORRECT;
+            if (_is_game_over)
+                break;
 
             generatePlayerAdvice(_guess_state);
-
-            _guesses_attempted++;
         }
 
         if (player_quit)
@@ -407,6 +405,7 @@ const game = function () {
 
         if (is_qualified_for_leaderboard) {
             let player_name = getPlayerName(new_highscore);
+            player_quit = player_name === null;
             if (player_name === null)
                 continue;
 
