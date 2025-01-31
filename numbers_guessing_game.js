@@ -20,6 +20,7 @@ const OPTION_PARAM_KEY = "-option-param-";
 const GUESSES_PARAM_KEY = "-guesses-param-";
 const HIGHSCORE_PARAM_KEY = "-highscore-param-"
 const SCORE_PARAM_KEY = "-score-param-"
+const PLAYER_NAME_PARAM_KEY = "-player-name-param-"
 const LEADERBOARD_SAVE_KEY = "leaderboard";
 const SaveManager = Object.freeze({
     save: function (key, value) {
@@ -103,11 +104,12 @@ const END_GAME_LOSE = [
 const ATTEMPT_COUNTER_MESSAGE = `Attempt ${GUESSES_PARAM_KEY}\\${MAX_ATTEMPTS}\n\n`;
 const ADDITIONAL_PLAYER_FEEDBACK = "Hmm.. I didn't understand that message, try a number between 0 and 100.";
 const MADE_LEADERBOARD_MESSAGE = `٩(^‿^)۶\nCongrats CHAMP!\nYou've made the leaderboard!\nScore: ${HIGHSCORE_PARAM_KEY}\n\nNow give me your player name so I can place you in there.`
-const VALID_PLAYER_NAME_FEEDBACK = `Please give me a valid name. Max 20 characters`;
-const TRY_AGAIN_MESSAGE = "Would you like to try again?";
+const VALID_PLAYER_NAME_FEEDBACK = `Please give me a valid name, try using letters and numbers`;
+const TRY_AGAIN_MESSAGE = "Would you like to take another stab at defeating Saruman?";
 const SKIP_INTRO_MESSAGE = "Would you like to skip the intro?";
 const YOU_QUIT_MESSAGE = "Sorry to see you go!\n\nThanks for playing! See you next time!";
 const YOU_QUIT_RETRY_MESSAGE = "Oh no, you QUIT the game!\n\n";
+const PLAYER_NAME_ALREADY_EXISTS_MESSAGE = `Player name ${PLAYER_NAME_PARAM_KEY} already exists in the leaderboard. Would you like to use a different player name?`;
 const LEADERBOARD_TITLE = "Leaderboard\n\n";
 const YOUR_HIGHSCORE_MESSAGE = `\n\nYour score is ${SCORE_PARAM_KEY}`
 
@@ -243,16 +245,20 @@ const getPlayerName = function (highscore) {
     let message = MADE_LEADERBOARD_MESSAGE.replace(HIGHSCORE_PARAM_KEY, highscore);
 
     let new_player_name = prompt(message);
-
     if (new_player_name === null)
         return null;
 
-    while (new_player_name === null || new_player_name === undefined || new_player_name.trim().length === 0) {
+    while (new_player_name.trim().length === 0) {
         new_player_name = prompt(VALID_PLAYER_NAME_FEEDBACK);
+
+        if (new_player_name == null)
+            break;
     }
 
-    new_player_name = new_player_name.substring(0, 20);
-    _current_player_name = new_player_name;
+    if (new_player_name != null) {
+        new_player_name = new_player_name.substring(0, 20);
+        _current_player_name = new_player_name;
+    }
 
     return new_player_name;
 }
@@ -274,19 +280,24 @@ const loadLeaderboard = function () {
     _leaderboard = JSON.parse(SaveManager.read(LEADERBOARD_SAVE_KEY));
 }
 
-const saveHighscore = function (player_name, highscore) {
-    if (player_name == null || highscore == null)
-        return
-
+const checkPlayerExists = function (player_name) {
     let existing_player = null;
     if (_leaderboard != null) {
         for (let i = 0; i < _leaderboard.length; i++) {
-            if (_leaderboard[i].name === player_name) {
+            if (_leaderboard[i].name == player_name) {
                 existing_player = _leaderboard[i];
                 break;
             }
         }
     }
+    return existing_player;
+}
+
+const saveHighscore = function (player_name, highscore) {
+    if (player_name == null || highscore == null)
+        return
+
+    let existing_player = checkPlayerExists(player_name);
 
     if (existing_player == null) {
         if (_leaderboard == null)
@@ -294,7 +305,6 @@ const saveHighscore = function (player_name, highscore) {
         else
             _leaderboard[_leaderboard.length] = new LeaderboardItem(player_name, highscore);
     }
-
     else if (highscore > existing_player.score)
         existing_player.score = highscore;
 
@@ -308,11 +318,36 @@ const saveHighscore = function (player_name, highscore) {
     SaveManager.save(LEADERBOARD_SAVE_KEY, JSON.stringify(_leaderboard));
 }
 
+const addPlayerToLeaderboard = function (new_highscore) {
+    let player_name = getPlayerName(new_highscore);
+    if (player_name == null)
+        return;
+
+    while (true) {
+        let existing_player = checkPlayerExists(player_name);
+        if (existing_player == null)
+            break;
+        else {
+            if (confirm(PLAYER_NAME_ALREADY_EXISTS_MESSAGE.replace(PLAYER_NAME_PARAM_KEY, player_name))) {
+                player_name = getPlayerName(new_highscore);
+                if (player_name == null)
+                    break;
+            }
+            else
+                break;
+        }
+    }
+    saveHighscore(player_name, new_highscore);
+}
+
 const displayLeaderboard = function (score, is_on_leaderboard) {
+    if (_leaderboard == null)
+        return;
+
     let message = LEADERBOARD_TITLE;
     for (let i = 0; i < _leaderboard.length; i++) {
         let player = _leaderboard[i];
-        message += `${player.name} : ${player.score}`
+        message += `${(i+1)}. ${player.name} : ${player.score}`
 
         if (player.name == _current_player_name)
             message += " <-- (•̀ᴗ•́)و ̑̑"
@@ -356,12 +391,14 @@ const replaceParams = function (message) {
 const resetGame = function () {
     _next_player_advice = null;
     _guesses_attempted = 0;
-    _is_game_over = false;
+    _won_game = false;
     _guess_state = GUESS_STATES.UNKNOWN;
     _game_start_time = new Date().getTime();
     _game_end_time = _game_start_time;
     _guess_direction = 0;
     _guess_good_direction = true;
+    _previous_guess = -1;
+    _current_player_name = "";
 }
 
 const game = function () {
@@ -388,7 +425,7 @@ const game = function () {
         log("generatedNumber " + generatedNumber);
 
         let give_additional_player_feedback = false;
-        while (!_is_game_over && _guesses_attempted < MAX_ATTEMPTS) {
+        while (!_won_game && _guesses_attempted < MAX_ATTEMPTS) {
             let message_to_player = buildMessageToPlayer(_guesses_attempted, give_additional_player_feedback);
             let player_input = getPlayerGuess(replaceParams(message_to_player));
 
@@ -401,8 +438,7 @@ const game = function () {
                 continue;
 
             _guess_state = checkPlayerGuess(player_input, generatedNumber);
-
-            _is_game_over = _guess_state == GUESS_STATES.CORRECT;
+            _won_game = _guess_state == GUESS_STATES.CORRECT;
 
             generateFeedbackForThePlayer(_guess_state);
         }
@@ -411,26 +447,20 @@ const game = function () {
             continue;
 
         _game_end_time = new Date().getTime();
-        let won_game = _guesses_attempted < MAX_ATTEMPTS;
-        playEndSequence(won_game);
+        playEndSequence(_won_game);
 
-        if (!won_game)
+        if (!_won_game)
             continue;
 
         let game_duration = _game_end_time - _game_start_time;
         let new_highscore = calculateHighscore(game_duration);
 
         let is_qualified_for_leaderboard = true;
-        if (_leaderboard !== null && _leaderboard.length >= LEADERBOARD_COUNT)
+        if (_leaderboard != null && _leaderboard.length >= LEADERBOARD_COUNT)
             is_qualified_for_leaderboard = new_highscore > _leaderboard[_leaderboard.length - 1].score;
 
         if (is_qualified_for_leaderboard) {
-            let player_name = getPlayerName(new_highscore);
-            player_quit = player_name === null;
-            if (player_name === null)
-                continue;
-
-            saveHighscore(player_name, new_highscore);
+            addPlayerToLeaderboard(new_highscore);
         }
 
         displayLeaderboard(new_highscore, is_qualified_for_leaderboard);
@@ -445,7 +475,7 @@ let _next_player_advice = null;
 let _last_player_choice = null;
 let _previous_guess = -1;
 let _guess_good_direction = true;
-let _is_game_over = true;
+let _won_game = true;
 let _guess_state = GUESS_STATES.UNKNOWN;
 let _game_start_time = 0;
 let _game_end_time = 0;
