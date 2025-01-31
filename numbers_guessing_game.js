@@ -204,7 +204,7 @@ const getPlayerGuess = function (message) {
     return isNaN(parsed_input) ? PLAYER_FEEDBACK_STATES.RETRY : parsed_input;
 };
 
-const checkPlayerGuess = function (playerGuess, numberGenerated) {
+const checkGuess = function (playerGuess, numberGenerated) {
 
     _guess_good_direction = Math.abs(numberGenerated - _previous_guess) > Math.abs(numberGenerated - playerGuess);
     _previous_guess = playerGuess;
@@ -437,7 +437,7 @@ const game = function () {
             else if (give_additional_player_feedback)
                 continue;
 
-            _guess_state = checkPlayerGuess(player_input, generatedNumber);
+            _guess_state = checkGuess(player_input, generatedNumber);
             _won_game = _guess_state == GUESS_STATES.CORRECT;
 
             generateFeedbackForThePlayer(_guess_state);
