@@ -12,11 +12,12 @@ Features
 - Random number generation
 - Feedback on guesses (too high, too low)
 - User-friendly interface
+- Leaderboard
 
 How to Play
 - Open the game from the demo link.
-- Enter your guess in the input field.
-- Click the "Guess" button.
+- Click the "OK" / "Cancel" button on the prompt.
+- Enter your guess in the input field when asked
 
 The game will tell you if your guess is too high or too low.
 Keep guessing until you find the correct number!
