@@ -244,6 +244,7 @@ let calculateHighscore = function (duration) {
 }
 
 const loadLeaderboard = function () {
+
     _leaderboard = JSON.parse(SaveManager.read(LEADERBOARD_SAVE_KEY));
 }
 
@@ -401,7 +402,7 @@ const game = function () {
         let new_highscore = calculateHighscore(game_duration);
 
         let is_qualified_for_leaderboard = true;
-        if (_leaderboard.length >= LEADERBOARD_COUNT)
+        if (_leaderboard !== null && _leaderboard.length >= LEADERBOARD_COUNT)
             is_qualified_for_leaderboard = new_highscore > _leaderboard[_leaderboard.length - 1].score;
 
         if (is_qualified_for_leaderboard) {
