@@ -105,6 +105,17 @@ class LeaderboardItem {
     }
 };
 
+const isLocalStorageEnabled = () => {
+    try {
+        const key = `__storage__test`;
+        window.localStorage.setItem(key, null);
+        window.localStorage.removeItem(key);
+        return true;
+    } catch (e) {
+        return false;
+    }
+};
+
 const generateRandomNumber = function (min = MIN_GUESS, max = MAX_GUESS) {
     return Math.floor(Math.random() * (max - min + 1) + min);
 };
@@ -247,8 +258,8 @@ let calculateHighscore = function (duration) {
 }
 
 const loadLeaderboard = function () {
-
-    _leaderboard = JSON.parse(SaveManager.read(LEADERBOARD_SAVE_KEY));
+    if (isLocalStorageEnabled)
+        _leaderboard = JSON.parse(SaveManager.read(LEADERBOARD_SAVE_KEY));
 }
 
 const saveHighscore = function (player_name, highscore) {
@@ -282,7 +293,8 @@ const saveHighscore = function (player_name, highscore) {
     if (_leaderboard.length > LEADERBOARD_COUNT)
         _leaderboard.pop();
 
-    SaveManager.save(LEADERBOARD_SAVE_KEY, JSON.stringify(_leaderboard));
+    if (isLocalStorageEnabled)
+        SaveManager.save(LEADERBOARD_SAVE_KEY, JSON.stringify(_leaderboard));
 }
 
 const displayLeaderboard = function (score, is_on_leaderboard) {
