@@ -1,5 +1,3 @@
-game preview link: https://alexgtraining.github.io/fdc_guess_numbers_game
-
 Guess the Number Game
 
 Introduction
