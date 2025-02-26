@@ -1,26 +1,44 @@
-Guess the Number Game
+<h2>Discalimer</h2>
 
-Introduction
-Welcome to the Guess the Number Game! This is a simple game where the player has to guess a randomly generated number within a specified range. The game provides feedback on whether the guess is too high or too low, guiding the player towards the correct answer.
+This project was created as an assignment for the Frontend Development Training Course organized by Kreativestorm.
 
-Demo
-Check out the live demo here https://alexgtraining.github.io/fdc_guess_numbers_game
+<h2>Requirements</h2>
 
-Features
-- Random number generation
-- Feedback on guesses (too high, too low)
-- User-friendly interface
-- Leaderboard
+<h3>Assignment specifications</h3>
 
-How to Play
-- Open the game from the demo link.
-- Click the "OK" / "Cancel" button on the prompt.
-- Enter your guess in the input field when asked
+  - Create a numbers guessing game using only alert / prompt / confirm windows
+  - Create the following functions:
+      - generateRandomNumber
+        - returns a random integer between 1 and 100 
+      - getPlayerGuess
+        - prompts the user to enter a guess and returns the player's input as an integer
+      - checkGuess 
+        - takes two parameters - the player's guess and the correct number. It should return a string indicating whetherthe guess is too low, too high, or correct
+      - game
+        - generateRandomNumber
+        - create loop with 10 attempts
+        - print win/lose message after the rounds end
+        - print number of attempts the player used
+  - Optional: Implement a scoring system that rewards the player with points based on how quickly they guess the correct number
 
-The game will tell you if your guess is too high or too low.
-Keep guessing until you find the correct number!
+<h3>Technologies allowed</h3>
 
-Technologies Used
-- HTML
-- JavaScript
+  - HTML
+  - JavaScript
 
+<h2>Implementation</h2>
+
+<h3>Preview</h3>
+
+https://alexgtraining.github.io/fdc_guess_numbers_game
+
+<h3>Considerations</h3>
+
+  - Engaging game backstory and messaging
+  - Handling user flow with
+      - option to retry
+      - skip intro after first attempt
+      - valid name insertion
+      - score update on leaderboard for same user
+      - top 5 leaderboard with yourself reflected independent of score
+  - Separated game content (messages, values) from game logic to ease potential future changes to content (eg. localization, game balancing, improve user experience)
