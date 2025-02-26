@@ -21,6 +21,7 @@ It represents 1 of 2 main assignments of the 3rd week, out of the 4 weeks of thi
         - print win/lose message after the rounds end
         - print number of attempts the player used
   - Optional: Implement a scoring system that rewards the player with points based on how quickly they guess the correct number
+  - Work with assigned colleagues as a team
 
 <h3>Technologies allowed</h3>
 
